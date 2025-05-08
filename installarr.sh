@@ -89,34 +89,49 @@ echo -e "\n*** Plex Media Server ***"
 if dpkg -s plexmediaserver >/dev/null 2>&1; then
     echo "Plex è già installato."
     read -p "Vuoi aggiornare Plex Media Server? (y/N): " ans
-    if [[ "$ans" =~ ^[Yy]$ ]]; then
-        URL=$(curl -fsSL https://plex.tv/api/downloads/5.json | grep -Eo 'https:[^"'\'' ]+plexmediaserver_[^"'\'' ]*amd64.deb' | head -n1)
-        wget -q "$URL" -O /tmp/plex.deb
-        apt-get install -y /tmp/plex.deb
-        rm /tmp/plex.deb
-        echo "[OK] Plex aggiornato."
-    fi
 else
     echo "Plex non trovato."
     read -p "Vuoi installare Plex Media Server? (y/N): " ans
-    if [[ "$ans" =~ ^[Yy]$ ]]; then
+fi
+
+if [[ "$ans" =~ ^[Yy]$ ]]; then
     echo "[INFO] Scarico l'ultima versione stabile di Plex Media Server..."
+
+    # Usa l'API di Plex per trovare l'ultima versione stabile per Debian (non beta)
     URL=$(curl -fsSL https://plex.tv/api/downloads/5.json | jq -r '
-        .computer.Linux.releases[] 
-        | select(.build == "linux-x86_64" and .distro == "debian" and (.isBeta == false)) 
+        .computer.Linux.releases[]
+        | select(.build == "linux-x86_64" and .distro == "debian" and (.isBeta == false))
         | .url' | head -n1
     )
 
+    # Se non trova nessun link valido, usa un link di fallback
     if [[ -z "$URL" ]]; then
-        echo "[ERRORE] Nessun link valido trovato per Plex Media Server stabile su Debian!"
+        echo "[AVVISO] Nessun link valido trovato dall'API di Plex. Procedo con il link di fallback specifico..."
+        URL="https://downloads.plex.tv/plex-media-server-new/1.41.6.9685-d301f511a/debian/plexmediaserver_1.41.6.9685-d301f511a_amd64.deb"
+        echo "[INFO] Userò il link di fallback: $URL"
+    else
+        echo "[INFO] Trovato link per Plex Media Server stabile: $URL"
+    fi
+
+    echo "[INFO] Scarico Plex Media Server..."
+    wget -q "$URL" -O /tmp/plex.deb
+
+    if [[ $? -ne 0 ]]; then
+        echo "[ERRORE] Download fallito! Controlla la connessione o il link e riprova."
         exit 1
     fi
 
-    wget -q "$URL" -O /tmp/plex.deb
+    echo "[INFO] Installo Plex Media Server..."
     apt-get install -y /tmp/plex.deb
+
+    if [[ $? -eq 0 ]]; then
+        echo "[OK] Plex Media Server installato correttamente."
+    else
+        echo "[ERRORE] Installazione fallita! Controlla eventuali errori sopra."
+    fi
+
+    # Pulizia file temporanei
     rm /tmp/plex.deb
-    echo "[OK] Plex Media Server installato correttamente."
-fi
 fi
 
 echo -e "\n=== Script completato con successo ==="
