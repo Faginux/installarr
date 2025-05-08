@@ -100,12 +100,23 @@ else
     echo "Plex non trovato."
     read -p "Vuoi installare Plex Media Server? (y/N): " ans
     if [[ "$ans" =~ ^[Yy]$ ]]; then
-        URL=$(curl -fsSL https://plex.tv/api/downloads/5.json | grep -Eo 'https:[^"'\'' ]+plexmediaserver_[^"'\'' ]*amd64.deb' | head -n1)
-        wget -q "$URL" -O /tmp/plex.deb
-        apt-get install -y /tmp/plex.deb
-        rm /tmp/plex.deb
-        echo "[OK] Plex installato."
+    echo "[INFO] Scarico l'ultima versione stabile di Plex Media Server..."
+    URL=$(curl -fsSL https://plex.tv/api/downloads/5.json | jq -r '
+        .computer.Linux.releases[] 
+        | select(.build == "linux-x86_64" and .distro == "debian" and (.isBeta == false)) 
+        | .url' | head -n1
+    )
+
+    if [[ -z "$URL" ]]; then
+        echo "[ERRORE] Nessun link valido trovato per Plex Media Server stabile su Debian!"
+        exit 1
     fi
+
+    wget -q "$URL" -O /tmp/plex.deb
+    apt-get install -y /tmp/plex.deb
+    rm /tmp/plex.deb
+    echo "[OK] Plex Media Server installato correttamente."
+fi
 fi
 
 echo -e "\n=== Script completato con successo ==="
