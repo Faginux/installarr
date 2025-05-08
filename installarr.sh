@@ -23,7 +23,7 @@ exec > >(tee -a "$LOGFILE") 2>&1
 
 # Aggiorna apt e installa utilità di base
 apt-get update -y
-apt-get install -y curl wget ca-certificates
+apt-get install -y curl wget ca-certificates jq
 
 # Scarica ed esegue lo script ufficiale Servarr per installare Radarr, Sonarr, Lidarr, Prowlarr in modo interattivo
 echo -e "\n=== Installazione Servarr Apps (Radarr, Sonarr, Lidarr, Prowlarr) ==="
