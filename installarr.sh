@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================================
-# installarr.sh - Versione 1.4
+# installarr.sh - Versione 1.6
 # Script completo per installare Radarr, Sonarr, Lidarr, Prowlarr, qBittorrent, Notifiarr,
 # Plex Media Server + Portainer + generazione di template (Watchtower, Overseerr, Immich, Flaresolverr).
 # =============================================================================================
