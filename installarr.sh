@@ -382,4 +382,59 @@ else
     echo "Creazione dei template saltata."
 fi
 
+# === Sezione finale: Configurazione del firewall UFW ===
+echo -e "\n*** Configurazione del firewall (UFW) ***"
+
+# Controlla se UFW è installato
+if ! command -v ufw >/dev/null 2>&1; then
+    echo "[INFO] UFW (Uncomplicated Firewall) non è installato."
+    read -p "Vuoi installare UFW adesso? (y/N): " install_ufw
+    if [[ "$install_ufw" =~ ^[Yy]$ ]]; then
+        apt-get install -y ufw
+        echo "[OK] UFW installato."
+    else
+        echo "[INFO] UFW non installato. Configurazione firewall saltata."
+        exit 0
+    fi
+else
+    echo "[OK] UFW è già installato."
+fi
+
+# Apertura porte per tutti i servizi principali
+echo "[INFO] Procedo ad aprire le porte necessarie per tutti i servizi..."
+
+declare -A services_ports=(
+    [Radarr]=7878
+    [Sonarr]=8989
+    [Lidarr]=8686
+    [Prowlarr]=9696
+    [qBittorrent]=8080
+    [Notifiarr]=5454
+    [Plex]=32400
+    [Portainer]=9443
+    [Overseerr]=5055
+    [Immich]=2283
+    [Flaresolverr]=8191
+)
+
+for service in "${!services_ports[@]}"; do
+    PORT="${services_ports[$service]}"
+    echo "[INFO] Apertura porta $PORT per $service..."
+    ufw allow "$PORT"
+done
+
+# Attiviamo UFW se non è già attivo
+ufw status | grep -qw active
+if [[ $? -ne 0 ]]; then
+    echo "[INFO] UFW non è attivo. Lo attivo adesso (default: deny incoming, allow outgoing)..."
+    ufw default deny incoming
+    ufw default allow outgoing
+    ufw enable
+else
+    echo "[INFO] UFW è già attivo."
+fi
+
+echo -e "\n[OK] Configurazione firewall completata. Puoi verificare le regole con: ufw status verbose"
+
+
 echo -e "\n=== Script completato con successo ==="
