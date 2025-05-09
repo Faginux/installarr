@@ -169,16 +169,23 @@ if [[ "$ans" =~ ^[Yy]$ ]]; then
         fi
     fi
 
-    echo "[INFO] Docker è presente. Procedo con Portainer..."
-    docker volume create portainer_data
-    docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -v portainer_data:/data portainer/portainer-ce:lts
-
-    if [[ $? -eq 0 ]]; then
-        echo "[OK] Portainer avviato. Visita https://localhost:9443 per accedere."
+    # Verifica se un container Portainer esiste già
+    if docker ps -a --format '{{.Names}}' | grep -wq portainer; then
+        echo "[INFO] È già presente un container chiamato 'portainer'."
+        echo "Puoi controllarne lo stato con: docker ps -a | grep portainer"
+        echo "L'installazione di Portainer viene quindi saltata."
     else
-        echo "[ERRORE] Problema durante l'avvio di Portainer."
+        echo "[INFO] Docker è presente. Procedo con Portainer..."
+        docker volume create portainer_data
+        docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v portainer_data:/data portainer/portainer-ce:lts
+
+        if [[ $? -eq 0 ]]; then
+            echo "[OK] Portainer avviato. Visita https://localhost:9443 per accedere."
+        else
+            echo "[ERRORE] Problema durante l'avvio di Portainer."
+        fi
     fi
 else
     echo "Installazione di Portainer saltata."
